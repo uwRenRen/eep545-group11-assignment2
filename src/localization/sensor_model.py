@@ -77,7 +77,35 @@ class SingleBeamSensorModel:
         # Use obs_r and sim_r to vectorize the sensor model precomputation.
         diff = sim_r - obs_r
         # BEGIN QUESTION 2.1
-        "*** REPLACE THIS LINE ***"
+        
+        #calculating gaussian probability for expected vs observed and incorporating to prob_table matrix
+        if self.z_hit > 0:
+        	sigma = self.hit_std
+        	p_hit = (1 / np.sqrt(2 * np.pi * sigma**2))* np.exp(-0.5 * (diff / sigma)**2)
+        	prob_table += self.z_hit * p_hit
+        
+        
+        #find where the observed distance is shorter than the expected
+        ShortIsTrue = sim_r > obs_r
+        prob_table[ShortIsTrue] += (self.z_short * 2 * diff[ShortIsTrue] / sim_r[ShortIsTrue]**2)
+        
+        #find where the observed distanced matches the max sensor range
+        MaxIsTrue = obs_r == max_r
+        prob_table[MaxIsTrue] += self.z_max
+        
+        #incorporating random-reading probabilities
+        if max_r > 0:
+        	RandIsTrue = obs_r < max_r
+        	prob_table[RandIsTrue] += self.z_rand / max_r
+        
+        #normalizing by adding all probabilities by total column value and dividng each entry by their total column value
+        column_sums = np.sum(prob_table, axis=0)
+        
+        # Debug: identify columns with no probability mass
+        
+        print("Zero-sum columns:", np.where(column_sums == 0)[0])
+		
+        prob_table = prob_table / column_sums
         # END QUESTION 2.1
 
         return prob_table

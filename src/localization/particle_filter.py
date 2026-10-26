@@ -45,6 +45,24 @@ class ParticleInitializer:
         # Hint: use utils.quaternion_to_angle to compute the orientation theta.
         # BEGIN QUESTION 3.1
         "*** REPLACE THIS LINE ***"
+        
+        # find the initial positon and orientation of robot
+        x = msg.position.x
+        y = msg.position.y
+        theta = utils.quaternion_to_angle(msg.orientation)
+
+        # Gaussian Distribution present as Vectorization
+        x_random = np.random.normal(x, self.x_std, n_particles)
+        y_random = np.random.normal(y, self.y_std, n_particles)
+        theta_random = np.random.normal(theta, self.theta_std, n_particles)
+
+        # assign random position to all particles
+        particles[:, 0] = x_random
+        particles[:, 1] = y_random
+        particles[:, 2] = theta_random
+
+        # set all particle weights to be equal
+        weights.fill(1.0 / n_particles)
         # END QUESTION 3.1
 
 

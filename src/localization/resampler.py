@@ -39,5 +39,30 @@ class LowVarianceSampler:
         # https://docs.python.org/3/library/threading.html#using-locks-conditions-and-semaphores-in-the-with-statement
         with self.state_lock:
             # BEGIN QUESTION 3.2
-            "*** REPLACE THIS LINE ***"
+            
+            # total number of particles
+            n = self.n_particles
+            
+            # get a random starting point
+            r = np.random.uniform(0, 1.0 / n)
+
+            # sampling position equaly
+            number = np.arange(n)
+            step = number / n
+            position = r + step
+
+            # calaulate the cumlative weights
+            weight_cumlatived = np.cumsum(self.weights)
+
+            # find the particle index based on sampling position
+            index = np.searchsorted(weight_cumlatived, position)
+
+            # choose the particles by the index
+            new_particles = np.take(self.particles, index, axis = 0)
+
+            # let original particles be updated
+            self.particles[:] = new_particles
+            
+            # rsest all particle weights to be equal
+            self.weights.fill(1.0 / n)
             # END QUESTION 3.2

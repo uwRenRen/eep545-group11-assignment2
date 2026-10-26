@@ -65,7 +65,50 @@ class KinematicCarMotionModel:
         """
         # BEGIN QUESTION 1.1
         "*** REPLACE THIS LINE ***"
-        return np.zeros_like(states, dtype=float)
+        deltas = np.zeros((len(states), 3))
+
+        if dt == 0:
+            return deltas
+
+        v = controls [:, 0]
+        steering = controls[:, 1]
+        theta = states[:, 2]
+        L = self.car_length
+
+        #Determines if the vehicle is turning based on array steering value higher than .1353
+        turning_mask = np.abs(steering) >= delta_threshold
+
+
+        #based on the true or false return from turning_mask array, now will return only velocity, steering and theta values within array that contained a true return
+        v_turn = v[turning_mask]
+        steering_turn = steering[turning_mask]
+        theta_turn = theta[turning_mask]
+
+        #now using provided formula calculating dx, dy and dtheta to eventually provide the final state
+        deltaTheta = (v_turn / L) * np.tan(steering_turn) * dt
+        deltaX = (L/np.tan(steering_turn)) * (np.sin(theta_turn + deltaTheta) - np.sin(theta_turn))
+        deltaY = (L/np.tan(steering_turn)) * (-np.cos(theta_turn + deltaTheta) + np.cos(theta_turn))
+
+        #store turning particle changes
+        deltas[turning_mask, 0] = deltaX
+        deltas[turning_mask, 1] = deltaY
+        deltas[turning_mask, 2] = deltaTheta
+
+        #if the vehicle is not turning just reverse the straight_mask values within array
+        straight_mask = ~turning_mask
+        v_straight = v[straight_mask]
+        theta_straight = theta[straight_mask]
+
+        # Calculate straight-line movement
+        deltaX = v_straight * np.cos(theta_straight) * dt
+        deltaY = v_straight * np.sin(theta_straight) * dt
+
+        # Store straight-driving particle changes
+        deltas[straight_mask, 0] = deltaX
+        deltas[straight_mask, 1] = deltaY
+            
+        
+        return deltas
         # END QUESTION 1.1
 
     def apply_motion_model(self, states, vel, delta, dt):
@@ -90,10 +133,23 @@ class KinematicCarMotionModel:
             dt (float): control duration
         """
         n_particles = states.shape[0]
+        noisyControls = np.zeros((len(states), 2))
 
         # Hint: you may find the np.random.normal function useful
         # BEGIN QUESTION 1.2
-        "*** REPLACE THIS LINE ***"
+        # A bunch of gaussian normalization
+        noisyV = np.random.normal(vel, self.vel_std, size=n_particles)
+        noisySteering = np.random.normal(delta, self.delta_std, size=n_particles)
+        noisyControls[:, 0] = noisyV
+        noisyControls[:, 1] = noisySteering
+
+        noisyStateChange = self.compute_changes(states, noisyControls, dt)
+        deviations = [self.x_std, self.y_std, self.theta_std]
+        stateChange = np.random.normal(noisyStateChange, deviations)
+        states[:] = np.add(states, stateChange)
+        #Put al thetas from (-pi to pi]
+        states[:, 2] = np.pi - np.mod(np.pi - states[:, 2], 2 * np.pi)
+
         # END QUESTION 1.2
 
 
