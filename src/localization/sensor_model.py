@@ -296,7 +296,7 @@ class LaserScanSensorModelROS:
         ray_count = int(self.laser_angles.shape[0] / self.laser_ray_step)
         num_valid = filtered_angles.shape[0]
         sample_indices = np.arange(0, num_valid, float(num_valid) / ray_count).astype(
-            np.int
+            int
         )
         angles = np.copy(filtered_angles[sample_indices]).astype(np.float32)
         ranges = np.copy(filtered_ranges[sample_indices]).astype(np.float32)

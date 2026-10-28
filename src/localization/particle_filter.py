@@ -264,7 +264,7 @@ class ParticleFilter:
         # Offset to car's center of mass
         position[0] += (self.car_length / 2) * np.cos(theta)
         position[1] += (self.car_length / 2) * np.sin(theta)
-        return np.array((position[0], position[1], theta), dtype=np.float)
+        return np.array((position[0], position[1], theta), dtype=float)
 
     def clicked_pose_cb(self, msg):
         """Reinitialize particles and weights according to the received initial pose.
